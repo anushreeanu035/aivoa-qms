@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aivoa-postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aivoi_deviations
+      POSTGRES_USER: aivoa_user
+      POSTGRES_PASSWORD: aivoa_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aivoa_user -d aivoi_deviations"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aivoa-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aivoa-qms:latest
+    container_name: aivoa-qms-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://aivoa_user:aivoa_secure_password@postgres:5432/aivoi_deviations
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - aivoa-data:/app/data
+
+volumes:
+  aivoa-data:
+    name: aivoa_qms_data
+  postgres-data:
+    name: aivoa_postgres_data

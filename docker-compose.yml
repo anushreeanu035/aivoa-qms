@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # AIVOA Full-Stack Application (Frontend SPA + FastAPI Backend)
+  # ----------------------------------------------------------------------------
+  aivoa-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aivoa-qms:latest
+    container_name: aivoa-qms-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+      # By default uses the persistent SQLite volume in /app/data
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/deviations.db}
+      # Groq AI Model Configuration (Optional: fallback heuristic runs if empty)
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+    volumes:
+      # Persistent storage for SQLite database & uploaded documents
+      - aivoa-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # Optional Production PostgreSQL Service
+  # Run standalone SQLite: docker compose up -d
+  # Run with PostgreSQL:  docker compose --profile postgres up -d
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: aivoa-postgres-db
+    restart: unless-stopped
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aivoi_deviations}
+      POSTGRES_USER: ${POSTGRES_USER:-aivoa_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aivoa_secure_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aivoa_user} -d ${POSTGRES_DB:-aivoi_deviations}"]
+      retries: 5
+
+volumes:
+  aivoa-data:
+    name: aivoa_qms_data
+  postgres-data:
+    name: aivoa_postgres_data

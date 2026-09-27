@@ -1,0 +1,43 @@
+# Dependencies & virtual environments
+node_modules/
+frontend/node_modules/
+backend/venv/
+venv/
+.venv/
+env/
+
+# Python cache & build files
+**/__pycache__/
+**/*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases & logs
+*.db
+*.sqlite
+*.sqlite3
+deviations.db
+backend/deviations.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git & IDE configs
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+
+# Environment files with sensitive credentials
+.env
+backend/.env
+frontend/.env.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
